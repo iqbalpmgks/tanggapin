@@ -1,0 +1,39 @@
+{
+  "name": "tanggapin",
+  "version": "1.0.0",
+  "description": "Instagram Auto Reply System for SMEs and Content Creators",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "start:backend": "npm run start --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "install:all": "npm install --workspaces",
+    "test:backend": "npm run test --workspace=backend",
+    "test:frontend": "npm run test --workspace=frontend",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "keywords": [
+    "instagram",
+    "auto-reply",
+    "sme",
+    "content-creators",
+    "automation",
+    "social-media"
+  ],
+  "author": "Tanggapin Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tanggapin/tanggapin.git"
+  }
+}

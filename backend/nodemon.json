@@ -1,0 +1,22 @@
+{
+  "watch": ["src"],
+  "ext": "js,json",
+  "ignore": [
+    "logs/*",
+    "*.test.js",
+    "node_modules",
+    "test-*.js",
+    "create-admin.js"
+  ],
+  "delay": "2000",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "restartable": "rs",
+  "verbose": true,
+  "legacyWatch": false,
+  "events": {
+    "restart": "echo 'Server restarted due to file changes'",
+    "crash": "echo 'Server crashed - waiting for changes'"
+  }
+}
