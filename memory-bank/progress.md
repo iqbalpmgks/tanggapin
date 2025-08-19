@@ -37,9 +37,9 @@
 #### Development Environment
 - [x] Package.json configuration for both frontend/backend
 - [x] Development scripts and tooling
-- [ ] Git repository initialization
-- [ ] Environment variables setup
-- [ ] Ngrok configuration for webhook testing
+- [x] Git repository initialization
+- [x] Environment variables setup
+- [x] Ngrok configuration for webhook testing
 
 ### Week 2: Core Authentication & Reply Engine
 #### Authentication System

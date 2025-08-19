@@ -1,0 +1,98 @@
+# =============================================================================
+# NGROK CONFIGURATION FILE FOR TANGGAPIN
+# =============================================================================
+# This file contains ngrok configuration for webhook testing
+# Place this file in your home directory or use with --config flag
+# =============================================================================
+
+# Authentication token (can also be set via environment variable)
+# Get your token from: https://dashboard.ngrok.com/get-started/your-authtoken
+# authtoken: your_auth_token_here
+
+# Global configuration
+version: "2"
+log_level: info
+log_format: logfmt
+log: stdout
+
+# Tunnel definitions
+tunnels:
+  # Main backend API tunnel
+  tanggapin-api:
+    addr: 3000
+    proto: http
+    subdomain: tanggapin-dev
+    region: us
+    inspect: true
+    bind_tls: true
+    host_header: localhost:3000
+    schemes:
+      - https
+      - http
+    
+  # Alternative tunnel without subdomain (for free accounts)
+  tanggapin-api-free:
+    addr: 3000
+    proto: http
+    region: us
+    inspect: true
+    bind_tls: true
+    host_header: localhost:3000
+    schemes:
+      - https
+      - http
+  
+  # Frontend tunnel (if needed for testing)
+  tanggapin-frontend:
+    addr: 5173
+    proto: http
+    subdomain: tanggapin-frontend-dev
+    region: us
+    inspect: true
+    bind_tls: true
+    host_header: localhost:5173
+    schemes:
+      - https
+      - http
+
+# Web interface configuration
+web_addr: localhost:4040
+console_ui: true
+
+# Update configuration
+update_channel: stable
+update_check: true
+
+# Regional settings
+region: us
+
+# Connection settings
+connect_timeout: 30s
+heartbeat_interval: 1m
+heartbeat_tolerance: 5s
+
+# Metadata for tracking
+metadata: '{"service": "tanggapin", "environment": "development"}'
+
+# Custom headers (if needed)
+# headers:
+#   X-Custom-Header: "Tanggapin-Webhook"
+
+# Basic authentication (if needed for security)
+# basic_auth:
+#   - "username:password"
+
+# IP restrictions (if needed)
+# allow_cidr:
+#   - "0.0.0.0/0"
+
+# Request/response transformation (if needed)
+# request_header:
+#   add:
+#     X-Forwarded-Proto: https
+#   remove:
+#     - X-Unwanted-Header
+
+# response_header:
+#   add:
+#     X-Ngrok-Tunnel: true

@@ -16,7 +16,11 @@
     "test:backend": "npm run test --workspace=backend",
     "test:frontend": "npm run test --workspace=frontend",
     "lint": "npm run lint --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present"
+    "clean": "npm run clean --workspaces --if-present",
+    "ngrok": "node scripts/ngrok-smart.js",
+    "ngrok:backend": "npm run ngrok --workspace=backend",
+    "ngrok:simple": "ngrok http 3000",
+    "ngrok:port": "node scripts/ngrok-smart.js"
   },
   "keywords": [
     "instagram",

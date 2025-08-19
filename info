@@ -1,0 +1,34 @@
+t=2025-08-19T19:09:21+0700 lvl=info msg="command usage" msg="Flag --subdomain has been deprecated, host tunnel on a custom subdomain"
+t=2025-08-19T19:09:21+0700 lvl=info msg="command usage" msg="Flag --region has been deprecated, ngrok automatically chooses the region with lowest latency"
+t=2025-08-19T19:09:21+0700 lvl=info msg="no configuration paths supplied"
+t=2025-08-19T19:09:21+0700 lvl=info msg="using configuration at default config path" path=C:\\Users\\Ecom-Ultra5\\AppData\\Local/ngrok/ngrok.yml
+t=2025-08-19T19:09:21+0700 lvl=info msg="open config file" path=C:\\Users\\Ecom-Ultra5\\AppData\\Local\\ngrok\\ngrok.yml err=nil
+t=2025-08-19T19:09:21+0700 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+t=2025-08-19T19:09:22+0700 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="authentication failed: The authtoken you specified does not look like a proper ngrok tunnel authtoken.\nYour authtoken: your_ngrok_auth_token_here\nInstructions to install your authtoken are on your ngrok dashboard:\nhttps://dashboard.ngrok.com/get-started/your-authtoken\r\n\r\nERR_NGROK_105\r\n"
+t=2025-08-19T19:09:22+0700 lvl=eror msg="session closing" obj=tunnels.session err="authentication failed: The authtoken you specified does not look like a proper ngrok tunnel authtoken.\nYour authtoken: your_ngrok_auth_token_here\nInstructions to install your authtoken are on your ngrok dashboard:\nhttps://dashboard.ngrok.com/get-started/your-authtoken\r\n\r\nERR_NGROK_105\r\n"
+t=2025-08-19T19:09:22+0700 lvl=info msg="received stop request" obj=app stopReq="{err:{Remote:true Inner:{Inner:0xc000590300}} restart:false}"
+t=2025-08-19T19:09:22+0700 lvl=eror msg="terminating with error" obj=app err="authentication failed: The authtoken you specified does not look like a proper ngrok tunnel authtoken.\nYour authtoken: your_ngrok_auth_token_here\nInstructions to install your authtoken are on your ngrok dashboard:\nhttps://dashboard.ngrok.com/get-started/your-authtoken\r\n\r\nERR_NGROK_105\r\n"
+t=2025-08-19T19:09:22+0700 lvl=crit msg="command failed" err="authentication failed: The authtoken you specified does not look like a proper ngrok tunnel authtoken.\nYour authtoken: your_ngrok_auth_token_here\nInstructions to install your authtoken are on your ngrok dashboard:\nhttps://dashboard.ngrok.com/get-started/your-authtoken\r\n\r\nERR_NGROK_105\r\n"
+t=2025-08-19T19:09:22+0700 lvl=info msg="no more state changes" obj=tunnels.session
+t=2025-08-19T19:15:21+0700 lvl=info msg="command usage" msg="Flag --subdomain has been deprecated, host tunnel on a custom subdomain"
+t=2025-08-19T19:15:21+0700 lvl=info msg="command usage" msg="Flag --region has been deprecated, ngrok automatically chooses the region with lowest latency"
+t=2025-08-19T19:15:21+0700 lvl=info msg="no configuration paths supplied"
+t=2025-08-19T19:15:21+0700 lvl=info msg="using configuration at default config path" path=C:\\Users\\Ecom-Ultra5\\AppData\\Local/ngrok/ngrok.yml
+t=2025-08-19T19:15:21+0700 lvl=info msg="open config file" path=C:\\Users\\Ecom-Ultra5\\AppData\\Local\\ngrok\\ngrok.yml err=nil
+t=2025-08-19T19:15:21+0700 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+t=2025-08-19T19:15:23+0700 lvl=info msg="client session established" obj=tunnels.session
+t=2025-08-19T19:15:23+0700 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-08-19T19:15:23+0700 lvl=eror msg="session closing" obj=tunnels.session err="failed to start tunnel: Custom subdomains are a feature on ngrok's paid plans.\nFailed to bind the custom subdomain 'tanggapin-dev' for the account 'Iqbal'.\nThis account is on the 'Free' plan.\n\nUpgrade to a paid plan at: https://dashboard.ngrok.com/billing/subscription\r\n\r\nERR_NGROK_313\r\n"
+t=2025-08-19T19:15:23+0700 lvl=info msg="accept failed" obj=tunnels.session obj=csess id=4f1a58d6d21d err="reconnecting session closed"
+t=2025-08-19T19:15:23+0700 lvl=info msg="no more state changes" obj=tunnels.session
+t=2025-08-19T19:15:23+0700 lvl=info msg="received stop request" obj=app stopReq="{err:{Inner:{Inner:0xc000055200}} restart:false}"
+t=2025-08-19T19:15:23+0700 lvl=eror msg="terminating with error" obj=app err="failed to start tunnel: Custom subdomains are a feature on ngrok's paid plans.\nFailed to bind the custom subdomain 'tanggapin-dev' for the account 'Iqbal'.\nThis account is on the 'Free' plan.\n\nUpgrade to a paid plan at: https://dashboard.ngrok.com/billing/subscription\r\n\r\nERR_NGROK_313\r\n"
+t=2025-08-19T19:15:23+0700 lvl=crit msg="command failed" err="failed to start tunnel: Custom subdomains are a feature on ngrok's paid plans.\nFailed to bind the custom subdomain 'tanggapin-dev' for the account 'Iqbal'.\nThis account is on the 'Free' plan.\n\nUpgrade to a paid plan at: https://dashboard.ngrok.com/billing/subscription\r\n\r\nERR_NGROK_313\r\n"
+t=2025-08-19T19:22:26+0700 lvl=info msg="command usage" msg="Flag --region has been deprecated, ngrok automatically chooses the region with lowest latency"
+t=2025-08-19T19:22:26+0700 lvl=info msg="no configuration paths supplied"
+t=2025-08-19T19:22:26+0700 lvl=info msg="using configuration at default config path" path=C:\\Users\\Ecom-Ultra5\\AppData\\Local/ngrok/ngrok.yml
+t=2025-08-19T19:22:26+0700 lvl=info msg="open config file" path=C:\\Users\\Ecom-Ultra5\\AppData\\Local\\ngrok\\ngrok.yml err=nil
+t=2025-08-19T19:22:26+0700 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+t=2025-08-19T19:22:27+0700 lvl=info msg="client session established" obj=tunnels.session
+t=2025-08-19T19:22:27+0700 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-08-19T19:22:27+0700 lvl=info msg="started tunnel" obj=tunnels name=command_line addr=http://localhost:3000 url=https://4331a0dcf220.ngrok-free.app
