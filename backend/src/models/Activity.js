@@ -20,13 +20,13 @@ const activitySchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['COMMENT_RECEIVED', 'DM_SENT', 'COMMENT_REPLIED', 'FALLBACK_COMMENT', 'ERROR'],
+    enum: ['COMMENT_RECEIVED', 'MESSAGE_RECEIVED', 'DM_SENT', 'COMMENT_REPLIED', 'FALLBACK_COMMENT', 'ERROR'],
     required: [true, 'Activity type is required'],
     index: true
   },
   status: {
     type: String,
-    enum: ['SUCCESS', 'FAILED', 'PENDING', 'FALLBACK'],
+    enum: ['SUCCESS', 'FAILED', 'PENDING', 'FALLBACK', 'PROCESSING', 'IGNORED', 'NO_MATCH', 'ERROR'],
     required: [true, 'Activity status is required'],
     index: true
   },
@@ -71,6 +71,23 @@ const activitySchema = new mongoose.Schema({
     matchedTerm: {
       type: String // The actual term that matched (could be synonym)
     }
+  },
+  matchingData: {
+    tag: String,
+    matchedTerm: String,
+    matchType: String,
+    confidence: Number,
+    priority: Number,
+    totalMatches: Number,
+    totalKeywords: Number,
+    processingTime: Number,
+    cacheHit: Boolean,
+    allMatches: [{
+      tag: String,
+      matchedTerm: String,
+      confidence: Number,
+      priority: Number
+    }]
   },
   response: {
     type: {

@@ -1,4 +1,7 @@
 const logger = require('../config/logger');
+const keywordMatchingService = require('../services/KeywordMatchingService');
+const responseTemplateService = require('../services/ResponseTemplateService');
+const eventQueueService = require('../services/EventQueueService');
 
 /**
  * Verify Instagram webhook
@@ -39,6 +42,93 @@ const Keyword = require('../models/Keyword');
 const Activity = require('../models/Activity');
 const Joi = require('joi');
 
+/**
+ * Enhanced activity logging function
+ */
+const logActivity = async (activityData) => {
+  try {
+    const activity = await Activity.create({
+      userId: activityData.userId || null,
+      postId: activityData.postId || null,
+      keywordId: activityData.keywordId || null,
+      type: activityData.type,
+      status: activityData.status,
+      instagramData: activityData.instagramData,
+      matchingData: activityData.matchingData || null,
+      response: activityData.response || null,
+      error: activityData.error || null,
+      metadata: {
+        processingTime: activityData.processingTime,
+        reason: activityData.reason,
+        fallbackReason: activityData.fallbackReason,
+        userAgent: activityData.userAgent,
+        ipAddress: activityData.ipAddress
+      }
+    });
+
+    // Log to console for debugging
+    logger.info('Activity logged:', {
+      activityId: activity._id,
+      type: activity.type,
+      status: activity.status,
+      fromUser: activityData.instagramData?.fromUsername,
+      text: activityData.instagramData?.originalText?.substring(0, 50),
+      tag: activityData.matchingData?.tag,
+      processingTime: activityData.processingTime
+    });
+
+    return activity;
+  } catch (error) {
+    logger.error('Failed to log activity:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update activity status with additional data
+ */
+const updateActivityStatus = async (activityId, status, updateData = {}) => {
+  try {
+    const updateFields = {
+      status,
+      updatedAt: new Date()
+    };
+
+    if (updateData.response) {
+      updateFields.response = updateData.response;
+    }
+
+    if (updateData.error) {
+      updateFields.error = updateData.error;
+    }
+
+    if (updateData.processingTime) {
+      updateFields['metadata.processingTime'] = updateData.processingTime;
+    }
+
+    if (updateData.fallbackReason) {
+      updateFields['metadata.fallbackReason'] = updateData.fallbackReason;
+    }
+
+    const activity = await Activity.findByIdAndUpdate(
+      activityId,
+      { $set: updateFields },
+      { new: true }
+    );
+
+    logger.info('Activity status updated:', {
+      activityId,
+      status,
+      processingTime: updateData.processingTime
+    });
+
+    return activity;
+  } catch (error) {
+    logger.error('Failed to update activity status:', error);
+    throw error;
+  }
+};
+
 // Validation schemas
 const testWebhookSchema = Joi.object({
   type: Joi.string().valid('comment', 'message').required().messages({
@@ -70,12 +160,24 @@ const testWebhookSchema = Joi.object({
 });
 
 /**
- * Process Instagram webhook event
+ * Process Instagram webhook event with enhanced keyword matching
  */
 const processWebhookEvent = async (eventData) => {
+  const startTime = Date.now();
+  
   try {
     const { type, postId, fromUserId, fromUsername, text, commentId, messageId, timestamp } = eventData;
     
+    // Log incoming webhook event
+    logger.info('Processing webhook event:', {
+      type,
+      postId,
+      fromUserId,
+      fromUsername,
+      text: text?.substring(0, 100) + (text?.length > 100 ? '...' : ''),
+      timestamp: timestamp || new Date()
+    });
+
     // Find the post and verify it has automation enabled
     const post = await Post.findOne({
       instagramPostId: postId,
@@ -85,21 +187,11 @@ const processWebhookEvent = async (eventData) => {
 
     if (!post) {
       logger.info(`Post ${postId} not found or automation disabled`);
-      return { success: false, reason: 'Post not found or automation disabled' };
-    }
-
-    // Find matching keywords for this post
-    const matchingKeywords = await Keyword.findMatchingKeywords(post._id, text);
-    
-    if (matchingKeywords.length === 0) {
-      logger.info(`No matching keywords found for text: "${text}" in post ${postId}`);
       
-      // Create activity for unmatched comment
-      await Activity.create({
-        userId: post.userId,
-        postId: post._id,
-        type: type === 'comment' ? 'COMMENT_RECEIVED' : 'DM_SENT',
-        status: 'SUCCESS',
+      // Log activity for post not found
+      await logActivity({
+        type: type === 'comment' ? 'COMMENT_RECEIVED' : 'MESSAGE_RECEIVED',
+        status: 'IGNORED',
         instagramData: {
           commentId,
           messageId,
@@ -108,24 +200,95 @@ const processWebhookEvent = async (eventData) => {
           originalText: text,
           timestamp: timestamp || new Date()
         },
-        response: {
-          type: 'NONE'
-        }
+        reason: 'Post not found or automation disabled',
+        processingTime: Date.now() - startTime
+      });
+      
+      return { success: false, reason: 'Post not found or automation disabled' };
+    }
+
+    // Use keyword matching service for enhanced matching
+    const matchOptions = {
+      enableFuzzyMatching: true,
+      fuzzyThreshold: 0.8,
+      enableWordBoundary: true,
+      maxMatches: 3,
+      minConfidence: 0.7
+    };
+
+    const matchResult = await keywordMatchingService.matchMessage(
+      post._id,
+      text,
+      matchOptions
+    );
+
+    if (!matchResult.success) {
+      logger.error('Keyword matching service error:', matchResult.error);
+      
+      await logActivity({
+        userId: post.userId,
+        postId: post._id,
+        type: type === 'comment' ? 'COMMENT_RECEIVED' : 'MESSAGE_RECEIVED',
+        status: 'ERROR',
+        instagramData: {
+          commentId,
+          messageId,
+          fromUserId,
+          fromUsername,
+          originalText: text,
+          timestamp: timestamp || new Date()
+        },
+        error: {
+          code: 'KEYWORD_MATCHING_ERROR',
+          message: matchResult.error
+        },
+        processingTime: Date.now() - startTime
+      });
+      
+      return { success: false, reason: matchResult.error };
+    }
+
+    if (matchResult.matches.length === 0) {
+      logger.info(`No matching keywords found for text: "${text}" in post ${postId}`);
+      
+      // Log activity for unmatched message
+      await logActivity({
+        userId: post.userId,
+        postId: post._id,
+        type: type === 'comment' ? 'COMMENT_RECEIVED' : 'MESSAGE_RECEIVED',
+        status: 'NO_MATCH',
+        instagramData: {
+          commentId,
+          messageId,
+          fromUserId,
+          fromUsername,
+          originalText: text,
+          timestamp: timestamp || new Date()
+        },
+        matchingData: {
+          totalKeywords: matchResult.totalKeywords,
+          processingTime: matchResult.processingTime,
+          cacheHit: matchResult.cacheHit
+        },
+        processingTime: Date.now() - startTime
       });
       
       return { success: true, reason: 'No matching keywords', action: 'logged' };
     }
 
-    // Use the highest priority keyword
-    const keyword = matchingKeywords[0];
+    // Use the best match (highest confidence and priority)
+    const bestMatch = matchResult.matches[0];
+    const keyword = bestMatch.keyword;
     
-    // Create activity record
-    const activity = await Activity.create({
+    logger.info(`Keyword matched: "${bestMatch.matchedTerm}" (${bestMatch.matchType}) with confidence ${bestMatch.confidence}`);
+
+    // Create comprehensive activity record
+    const activity = await logActivity({
       userId: post.userId,
       postId: post._id,
       keywordId: keyword._id,
-      type: 'COMMENT_RECEIVED',
-      status: 'PENDING',
+      type: type === 'comment' ? 'COMMENT_RECEIVED' : 'MESSAGE_RECEIVED',
+      status: 'PROCESSING',
       instagramData: {
         commentId,
         messageId,
@@ -137,18 +300,36 @@ const processWebhookEvent = async (eventData) => {
       matchedKeyword: {
         keyword: keyword.keyword,
         matchType: keyword.settings.matchType,
-        matchedTerm: keyword.keyword // This could be enhanced to show which synonym matched
-      }
+        matchedTerm: bestMatch.matchedTerm
+      },
+      matchingData: {
+        tag: bestMatch.tag,
+        matchedTerm: bestMatch.matchedTerm,
+        matchType: bestMatch.matchType,
+        confidence: bestMatch.confidence,
+        priority: bestMatch.priority,
+        totalMatches: matchResult.matches.length,
+        totalKeywords: matchResult.totalKeywords,
+        processingTime: matchResult.processingTime,
+        cacheHit: matchResult.cacheHit,
+        allMatches: matchResult.matches.map(m => ({
+          tag: m.tag,
+          matchedTerm: m.matchedTerm,
+          confidence: m.confidence,
+          priority: m.priority
+        }))
+      },
+      processingTime: Date.now() - startTime
     });
 
     // Determine response strategy based on post settings
     const replyMode = post.automationSettings.replyMode;
     let responseType = 'DM';
-    let responseMessage = keyword.response.dmMessage;
+    let responseMessage = bestMatch.responseData.dmMessage;
 
     // Add product link if enabled
-    if (keyword.response.includeProductLink && keyword.response.productLink) {
-      responseMessage += `\n\n${keyword.response.productLink}`;
+    if (bestMatch.responseData.productLink) {
+      responseMessage += `\n\n${bestMatch.responseData.productLink}`;
     }
 
     // Simulate sending response (in real implementation, this would call Instagram API)
@@ -160,11 +341,16 @@ const processWebhookEvent = async (eventData) => {
     );
 
     if (responseResult.success) {
-      // Mark activity as successful
-      await activity.markCompleted('SUCCESS', {
-        type: responseResult.type,
-        message: responseMessage,
-        instagramResponseId: responseResult.responseId
+      // Update activity as successful
+      await updateActivityStatus(activity._id, 'SUCCESS', {
+        response: {
+          type: responseResult.type,
+          message: responseResult.message,
+          instagramResponseId: responseResult.responseId,
+          responseTime: responseResult.responseTime,
+          retryCount: responseResult.retryCount || 0
+        },
+        processingTime: Date.now() - startTime
       });
 
       // Update keyword statistics
@@ -177,40 +363,24 @@ const processWebhookEvent = async (eventData) => {
       
       return {
         success: true,
-        action: 'replied',
+        action: responseResult.action || 'replied',
         responseType: responseResult.type,
         keyword: keyword.keyword,
-        activityId: activity._id
+        tag: bestMatch.tag,
+        confidence: bestMatch.confidence,
+        activityId: activity._id,
+        processingTime: Date.now() - startTime,
+        retryCount: responseResult.retryCount || 0
       };
     } else {
-      // Try fallback if DM failed
-      if (responseResult.error === 'DM_FAILED' && replyMode !== 'DMS_ONLY') {
-        const fallbackResult = await simulateInstagramResponse(
-          'COMMENT',
-          fromUserId,
-          keyword.response.fallbackComment,
-          'COMMENTS_ONLY'
-        );
-
-        if (fallbackResult.success) {
-          await activity.markFallback(keyword.response.fallbackComment);
-          await keyword.incrementMatch('fallback', fallbackResult.responseTime);
-          await post.incrementReplyCounter('fallback');
-
-          return {
-            success: true,
-            action: 'fallback',
-            responseType: 'COMMENT',
-            keyword: keyword.keyword,
-            activityId: activity._id
-          };
-        }
-      }
-
       // Mark as failed
-      await activity.markFailed({
-        code: responseResult.error,
-        message: responseResult.message
+      await updateActivityStatus(activity._id, 'FAILED', {
+        error: {
+          code: responseResult.error,
+          message: responseResult.message,
+          retryCount: responseResult.retryCount || 0
+        },
+        processingTime: Date.now() - startTime
       });
 
       await keyword.incrementMatch('failed');
@@ -220,11 +390,39 @@ const processWebhookEvent = async (eventData) => {
         success: false,
         reason: responseResult.message,
         keyword: keyword.keyword,
-        activityId: activity._id
+        tag: bestMatch.tag,
+        activityId: activity._id,
+        processingTime: Date.now() - startTime,
+        retryCount: responseResult.retryCount || 0
       };
     }
   } catch (error) {
     logger.error('Process webhook event error:', error);
+    
+    // Log error activity
+    try {
+      await logActivity({
+        type: type === 'comment' ? 'COMMENT_RECEIVED' : 'MESSAGE_RECEIVED',
+        status: 'ERROR',
+        instagramData: {
+          commentId: eventData.commentId,
+          messageId: eventData.messageId,
+          fromUserId: eventData.fromUserId,
+          fromUsername: eventData.fromUsername,
+          originalText: eventData.text,
+          timestamp: eventData.timestamp || new Date()
+        },
+        error: {
+          code: 'PROCESSING_ERROR',
+          message: error.message,
+          stack: error.stack
+        },
+        processingTime: Date.now() - startTime
+      });
+    } catch (logError) {
+      logger.error('Failed to log error activity:', logError);
+    }
+    
     return { success: false, reason: error.message };
   }
 };
@@ -259,7 +457,7 @@ const simulateInstagramResponse = async (type, userId, message, replyMode) => {
 };
 
 /**
- * Handle Instagram webhook events
+ * Handle Instagram webhook events with queue system
  */
 const handleWebhook = async (req, res) => {
   try {
@@ -268,15 +466,15 @@ const handleWebhook = async (req, res) => {
     // Acknowledge receipt immediately
     res.status(200).send('OK');
 
-    // Process webhook events asynchronously
+    // Process webhook events using queue system
     if (webhookData.entry && Array.isArray(webhookData.entry)) {
       for (const entry of webhookData.entry) {
         if (entry.changes && Array.isArray(entry.changes)) {
           for (const change of entry.changes) {
             if (change.field === 'comments' && change.value) {
-              // Process comment event
+              // Add comment event to queue
               const commentData = change.value;
-              await processWebhookEvent({
+              const eventData = {
                 type: 'comment',
                 postId: commentData.media?.id,
                 fromUserId: commentData.from?.id,
@@ -284,11 +482,23 @@ const handleWebhook = async (req, res) => {
                 text: commentData.text,
                 commentId: commentData.id,
                 timestamp: new Date(commentData.created_time * 1000)
-              });
+              };
+
+              await eventQueueService.addEvent(
+                eventData,
+                processWebhookEvent,
+                {
+                  priority: 1, // Comments have normal priority
+                  maxRetries: 3,
+                  retryDelay: 3000,
+                  timeout: 30000
+                }
+              );
+
             } else if (change.field === 'messages' && change.value) {
-              // Process message event
+              // Add message event to queue
               const messageData = change.value;
-              await processWebhookEvent({
+              const eventData = {
                 type: 'message',
                 postId: messageData.post_id,
                 fromUserId: messageData.from?.id,
@@ -296,14 +506,25 @@ const handleWebhook = async (req, res) => {
                 text: messageData.message?.text,
                 messageId: messageData.message?.mid,
                 timestamp: new Date(messageData.timestamp)
-              });
+              };
+
+              await eventQueueService.addEvent(
+                eventData,
+                processWebhookEvent,
+                {
+                  priority: 2, // Messages have higher priority
+                  maxRetries: 3,
+                  retryDelay: 3000,
+                  timeout: 30000
+                }
+              );
             }
           }
         }
       }
     }
 
-    logger.info('Webhook events processed successfully');
+    logger.info('Webhook events added to queue successfully');
   } catch (error) {
     logger.error('Handle webhook error:', error);
     // Don't return error to Instagram - we already acknowledged receipt
@@ -355,7 +576,30 @@ const getWebhookStatus = async (req, res) => {
 };
 
 /**
- * Test webhook with mock data
+ * Initialize webhook services
+ */
+const initializeWebhookServices = async () => {
+  try {
+    // Initialize Response Template Service
+    if (!responseTemplateService.isInitialized) {
+      await responseTemplateService.initialize();
+    }
+
+    // Initialize Event Queue Service
+    if (!eventQueueService.isInitialized) {
+      eventQueueService.initialize();
+    }
+
+    logger.info('Webhook services initialized successfully');
+    return true;
+  } catch (error) {
+    logger.error('Failed to initialize webhook services:', error);
+    throw error;
+  }
+};
+
+/**
+ * Test webhook with mock data using queue system
  */
 const testWebhook = async (req, res) => {
   try {
@@ -370,26 +614,43 @@ const testWebhook = async (req, res) => {
 
     const { type, postId, fromUserId, fromUsername, text, commentId, messageId } = value;
 
-    // Process the test event
-    const result = await processWebhookEvent({
-      type,
-      postId,
-      fromUserId,
-      fromUsername,
-      text,
-      commentId,
-      messageId,
-      timestamp: new Date()
-    });
+    // Add test event to queue
+    const eventId = await eventQueueService.addEvent(
+      {
+        type,
+        postId,
+        fromUserId,
+        fromUsername,
+        text,
+        commentId,
+        messageId,
+        timestamp: new Date()
+      },
+      processWebhookEvent,
+      {
+        priority: 10, // High priority for test events
+        maxRetries: 3,
+        retryDelay: 3000,
+        timeout: 30000
+      }
+    );
 
-    logger.info(`Test webhook processed: ${JSON.stringify(result)}`);
+    logger.info(`Test webhook added to queue: ${eventId}`);
+
+    // Wait a moment for processing to start
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Get event status
+    const eventStatus = eventQueueService.getEvent(eventId);
 
     res.json({
       success: true,
-      message: 'Test webhook processed successfully',
+      message: 'Test webhook added to queue successfully',
       data: {
         testEvent: value,
-        result
+        eventId,
+        eventStatus,
+        queueStatus: eventQueueService.getStatus()
       }
     });
   } catch (error) {
@@ -401,9 +662,66 @@ const testWebhook = async (req, res) => {
   }
 };
 
+/**
+ * Get queue status and statistics
+ */
+const getQueueStatus = async (req, res) => {
+  try {
+    const queueStatus = eventQueueService.getStatus();
+    const queueItems = eventQueueService.getQueueItems({ limit: 10 });
+    const statistics = eventQueueService.getStatistics();
+
+    res.json({
+      success: true,
+      data: {
+        status: queueStatus,
+        recentItems: queueItems,
+        statistics
+      }
+    });
+  } catch (error) {
+    logger.error('Get queue status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Get response templates
+ */
+const getResponseTemplates = async (req, res) => {
+  try {
+    const templates = responseTemplateService.getAllTemplates();
+    const statistics = responseTemplateService.getStatistics();
+
+    res.json({
+      success: true,
+      data: {
+        templates,
+        statistics
+      }
+    });
+  } catch (error) {
+    logger.error('Get response templates error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   verifyWebhook,
   handleWebhook,
   getWebhookStatus,
-  testWebhook
+  testWebhook,
+  processWebhookEvent,
+  logActivity,
+  updateActivityStatus,
+  initializeWebhookServices,
+  getQueueStatus,
+  getResponseTemplates,
+  sendResponseWithRetry
 };

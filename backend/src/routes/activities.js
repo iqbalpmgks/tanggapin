@@ -1,90 +1,85 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 const activitiesController = require('../controllers/activitiesController');
-const { authenticate, authorize } = require('../middleware/auth');
+
+// Apply authentication middleware to all routes
+router.use(auth);
 
 /**
  * @route   GET /api/activities
- * @desc    Get user's activities
+ * @desc    Get activities for authenticated user
  * @access  Private
+ * @query   page, limit, status, type, startDate, endDate, postId
  */
-router.get('/', authenticate, activitiesController.getActivities);
+router.get('/', activitiesController.getActivities);
 
 /**
- * @route   GET /api/activities/:id
- * @desc    Get single activity by ID
+ * @route   GET /api/activities/stats
+ * @desc    Get activity statistics
  * @access  Private
+ * @query   timeframe (day, week, month)
  */
-router.get('/:id', authenticate, activitiesController.getActivity);
-
-/**
- * @route   POST /api/activities
- * @desc    Create new activity (for testing/manual entry)
- * @access  Private
- */
-router.post('/', authenticate, activitiesController.createActivity);
-
-/**
- * @route   GET /api/activities/post/:postId
- * @desc    Get activities for specific post
- * @access  Private
- */
-router.get('/post/:postId', authenticate, activitiesController.getActivitiesByPost);
-
-/**
- * @route   GET /api/activities/stats/overview
- * @desc    Get user's activities overview statistics
- * @access  Private
- */
-router.get('/stats/overview', authenticate, activitiesController.getActivitiesOverview);
-
-/**
- * @route   GET /api/activities/stats/hourly
- * @desc    Get hourly activity distribution
- * @access  Private
- */
-router.get('/stats/hourly', authenticate, activitiesController.getHourlyDistribution);
-
-/**
- * @route   GET /api/activities/stats/performance
- * @desc    Get performance statistics
- * @access  Private
- */
-router.get('/stats/performance', authenticate, activitiesController.getPerformanceStats);
-
-/**
- * @route   POST /api/activities/:id/retry
- * @desc    Retry failed activity
- * @access  Private
- */
-router.post('/:id/retry', authenticate, activitiesController.retryActivity);
-
-/**
- * @route   GET /api/activities/failed
- * @desc    Get failed activities that can be retried
- * @access  Private
- */
-router.get('/failed', authenticate, activitiesController.getFailedActivities);
-
-/**
- * @route   POST /api/activities/retry-batch
- * @desc    Retry multiple failed activities
- * @access  Private
- */
-router.post('/retry-batch', authenticate, activitiesController.retryBatchActivities);
+router.get('/stats', activitiesController.getActivityStats);
 
 /**
  * @route   GET /api/activities/export
- * @desc    Export activities data
+ * @desc    Export activity data
  * @access  Private
+ * @query   format (json, csv), startDate, endDate, status, type
  */
-router.get('/export', authenticate, activitiesController.exportActivities);
+router.get('/export', activitiesController.exportActivities);
 
 /**
- * @route   DELETE /api/activities/cleanup
- * @desc    Cleanup old activities (Admin only)
- * @access  Private (Admin)
+ * @route   GET /api/activities/:activityId
+ * @desc    Get single activity details
+ * @access  Private
  */
-router.delete('/cleanup', authenticate, authorize('admin'), activitiesController.cleanupOldActivities);
+router.get('/:activityId', activitiesController.getActivityById);
+
+/**
+ * @route   POST /api/activities/test-keyword-matching
+ * @desc    Test keyword matching for a message
+ * @access  Private
+ * @body    { postId, text, options }
+ */
+router.post('/test-keyword-matching', activitiesController.testKeywordMatching);
+
+/**
+ * @route   POST /api/activities/batch-test-keyword-matching
+ * @desc    Batch test keyword matching for multiple messages
+ * @access  Private
+ * @body    { postId, messages, options }
+ */
+router.post('/batch-test-keyword-matching', activitiesController.batchTestKeywordMatching);
+
+/**
+ * @route   GET /api/activities/keyword-stats/:postId
+ * @desc    Get keyword matching statistics for a post
+ * @access  Private
+ * @query   startDate, endDate
+ */
+router.get('/keyword-stats/:postId', activitiesController.getKeywordMatchingStats);
+
+/**
+ * @route   POST /api/activities/refresh-cache/:postId
+ * @desc    Refresh keyword cache for a post
+ * @access  Private
+ */
+router.post('/refresh-cache/:postId', activitiesController.refreshKeywordCache);
+
+/**
+ * @route   POST /api/activities/clear-cache
+ * @desc    Clear all keyword cache
+ * @access  Private
+ */
+router.post('/clear-cache', activitiesController.clearKeywordCache);
+
+/**
+ * @route   GET /api/activities/service/metrics
+ * @desc    Get service performance metrics
+ * @access  Private
+ */
+router.get('/service/metrics', activitiesController.getServiceMetrics);
 
 module.exports = router;

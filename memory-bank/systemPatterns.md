@@ -237,3 +237,287 @@ Frontend State Update → UI Refresh
 - **Encryption**: Sensitive data encryption at rest
 - **Logging**: No sensitive data in logs
 - **Access Control**: Principle of least privilege
+
+## Post-MVP Architectural Patterns
+
+### 1. Feature Gating Pattern (Post-MVP)
+```javascript
+class FeatureGate {
+  constructor(userPlan, feature) {
+    this.userPlan = userPlan;
+    this.feature = feature;
+  }
+
+  canAccess() {
+    const limits = PLAN_LIMITS[this.userPlan];
+    return limits.features.includes(this.feature);
+  }
+
+  checkUsageLimit(currentUsage, limitType) {
+    const limits = PLAN_LIMITS[this.userPlan];
+    return currentUsage < limits[limitType];
+  }
+}
+
+// Usage-based limiting
+const PLAN_LIMITS = {
+  FREE: { dailyReplies: 20, features: ['basic_dashboard'] },
+  PRO: { dailyReplies: 300, features: ['advanced_analytics', 'ai_replies'] },
+  BUSINESS: { dailyReplies: 1000, features: ['multi_admin', 'priority_support'] }
+};
+```
+
+### 2. Multi-Tenant Architecture (Post-MVP)
+```javascript
+class TenantContext {
+  constructor(userId, organizationId) {
+    this.userId = userId;
+    this.organizationId = organizationId;
+  }
+
+  getDataScope() {
+    return {
+      user: this.userId,
+      organization: this.organizationId,
+      permissions: this.getUserPermissions()
+    };
+  }
+}
+
+// Data isolation pattern
+class TenantAwareRepository {
+  find(query, tenantContext) {
+    return this.model.find({
+      ...query,
+      organizationId: tenantContext.organizationId
+    });
+  }
+}
+```
+
+### 3. AI Integration Pattern (Post-MVP)
+```javascript
+class AIReplyService {
+  constructor(provider = 'openai') {
+    this.provider = provider;
+    this.fallbackToKeyword = true;
+  }
+
+  async generateReply(comment, context) {
+    try {
+      const aiReply = await this.provider.generate(comment, context);
+      return { type: 'AI', content: aiReply, confidence: 0.85 };
+    } catch (error) {
+      if (this.fallbackToKeyword) {
+        return this.keywordService.generateReply(comment, context);
+      }
+      throw error;
+    }
+  }
+}
+
+// Hybrid AI + Keyword pattern
+class HybridReplyEngine {
+  async processComment(comment, settings) {
+    if (settings.aiEnabled && this.featureGate.canUseAI()) {
+      return await this.aiService.generateReply(comment, settings);
+    }
+    return await this.keywordService.generateReply(comment, settings);
+  }
+}
+```
+
+### 4. Multi-Platform Integration Pattern (Post-MVP)
+```javascript
+class PlatformAdapter {
+  constructor(platform) {
+    this.platform = platform;
+  }
+
+  async sendMessage(recipient, message) {
+    switch (this.platform) {
+      case 'instagram':
+        return this.instagramAPI.sendDM(recipient, message);
+      case 'whatsapp':
+        return this.whatsappAPI.sendMessage(recipient, message);
+      case 'telegram':
+        return this.telegramAPI.sendMessage(recipient, message);
+    }
+  }
+}
+
+// Unified platform management
+class MultiPlatformManager {
+  constructor() {
+    this.adapters = new Map();
+  }
+
+  registerPlatform(name, adapter) {
+    this.adapters.set(name, adapter);
+  }
+
+  async broadcastMessage(platforms, recipient, message) {
+    const promises = platforms.map(platform => {
+      const adapter = this.adapters.get(platform);
+      return adapter.sendMessage(recipient, message);
+    });
+    return Promise.allSettled(promises);
+  }
+}
+```
+
+### 5. Advanced Analytics Pattern (Post-MVP)
+```javascript
+class AnalyticsAggregator {
+  constructor() {
+    this.metrics = new Map();
+  }
+
+  async aggregateEngagementMetrics(timeRange, filters) {
+    const pipeline = [
+      { $match: this.buildTimeFilter(timeRange) },
+      { $group: {
+        _id: '$platform',
+        totalReplies: { $sum: 1 },
+        successRate: { $avg: '$success' },
+        avgResponseTime: { $avg: '$responseTime' }
+      }},
+      { $sort: { totalReplies: -1 } }
+    ];
+    
+    return this.activityModel.aggregate(pipeline);
+  }
+}
+
+// Real-time analytics pattern
+class RealTimeAnalytics {
+  constructor(socketIO) {
+    this.io = socketIO;
+    this.subscribers = new Set();
+  }
+
+  trackEvent(event, data) {
+    this.updateMetrics(event, data);
+    this.broadcastUpdate(event, data);
+  }
+
+  broadcastUpdate(event, data) {
+    this.io.emit('analytics:update', { event, data, timestamp: Date.now() });
+  }
+}
+```
+
+### 6. Scalability Patterns (Post-MVP)
+
+#### Queue-Based Processing
+```javascript
+class ScalableQueueProcessor {
+  constructor(redisClient) {
+    this.redis = redisClient;
+    this.workers = [];
+  }
+
+  async addJob(queue, job, priority = 'normal') {
+    const queueKey = `queue:${queue}:${priority}`;
+    await this.redis.lpush(queueKey, JSON.stringify(job));
+  }
+
+  startWorkers(concurrency = 5) {
+    for (let i = 0; i < concurrency; i++) {
+      this.workers.push(this.createWorker());
+    }
+  }
+}
+```
+
+#### Microservices Communication
+```javascript
+class ServiceRegistry {
+  constructor() {
+    this.services = new Map();
+  }
+
+  register(serviceName, endpoint, healthCheck) {
+    this.services.set(serviceName, { endpoint, healthCheck });
+  }
+
+  async callService(serviceName, method, data) {
+    const service = this.services.get(serviceName);
+    if (!service) throw new Error(`Service ${serviceName} not found`);
+    
+    return axios.post(`${service.endpoint}/${method}`, data);
+  }
+}
+```
+
+### 7. Enterprise Security Patterns (Post-MVP)
+
+#### Audit Logging
+```javascript
+class AuditLogger {
+  constructor() {
+    this.sensitiveFields = ['password', 'token', 'apiKey'];
+  }
+
+  logAction(userId, action, resource, changes) {
+    const auditEntry = {
+      userId,
+      action,
+      resource,
+      changes: this.sanitizeData(changes),
+      timestamp: new Date(),
+      ip: this.getClientIP(),
+      userAgent: this.getUserAgent()
+    };
+    
+    this.auditModel.create(auditEntry);
+  }
+}
+```
+
+#### Role-Based Access Control
+```javascript
+class RBACManager {
+  constructor() {
+    this.roles = new Map();
+    this.permissions = new Map();
+  }
+
+  defineRole(roleName, permissions) {
+    this.roles.set(roleName, permissions);
+  }
+
+  hasPermission(userRoles, requiredPermission) {
+    return userRoles.some(role => {
+      const permissions = this.roles.get(role);
+      return permissions && permissions.includes(requiredPermission);
+    });
+  }
+}
+```
+
+## Future Architecture Considerations
+
+### 1. Database Scaling Strategy
+- **Read Replicas**: For analytics and reporting queries
+- **Sharding**: User-based sharding for horizontal scaling
+- **Caching Layer**: Redis for frequently accessed data
+- **Data Archiving**: Historical data management
+
+### 2. API Gateway Pattern
+- **Rate Limiting**: Per-user and per-plan limits
+- **Authentication**: Centralized JWT validation
+- **Request Routing**: Service-based routing
+- **Monitoring**: Request/response logging and metrics
+
+### 3. Event-Driven Architecture
+- **Event Sourcing**: Complete audit trail of all actions
+- **CQRS**: Separate read/write models for performance
+- **Event Bus**: Decoupled service communication
+- **Saga Pattern**: Distributed transaction management
+
+### 4. Monitoring and Observability
+- **Distributed Tracing**: Request flow across services
+- **Metrics Collection**: Business and technical metrics
+- **Log Aggregation**: Centralized logging with correlation IDs
+- **Health Checks**: Service availability monitoring

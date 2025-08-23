@@ -32,3 +32,39 @@ t=2025-08-19T19:22:26+0700 lvl=info msg="starting web service" obj=web addr=127.
 t=2025-08-19T19:22:27+0700 lvl=info msg="client session established" obj=tunnels.session
 t=2025-08-19T19:22:27+0700 lvl=info msg="tunnel session started" obj=tunnels.session
 t=2025-08-19T19:22:27+0700 lvl=info msg="started tunnel" obj=tunnels name=command_line addr=http://localhost:3000 url=https://4331a0dcf220.ngrok-free.app
+t=2025-08-19T19:23:45+0700 lvl=info msg="join connections" obj=join id=1313808d08b5 l=[::1]:3000 r=[2001:448a:2093:2034:6089:82f:aec6:e15f]:64314
+t=2025-08-19T19:24:11+0700 lvl=info msg="join connections" obj=join id=75cbf36c7243 l=[::1]:3000 r=[2001:448a:2093:2034:6089:82f:aec6:e15f]:64325
+t=2025-08-19T19:24:37+0700 lvl=info msg="join connections" obj=join id=14dea9bbccb9 l=[::1]:3000 r=[2001:448a:2093:2034:6089:82f:aec6:e15f]:64340
+t=2025-08-19T19:43:17+0700 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=9a3d2fdb811e err="read tcp [2001:448a:2093:2034:6089:82f:aec6:e15f]:64256->[2600:1f16:d83:1200::6e74:3]:443: wsarecv: An existing connection was forcibly closed by the remote host."
+t=2025-08-19T19:43:17+0700 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=80d0c343a53a clientid=9c7632e9d3b9ce77e18b18b842bc0920
+t=2025-08-19T19:43:20+0700 lvl=info msg="client session established" obj=tunnels.session
+t=2025-08-19T19:43:20+0700 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/ id=e209c9ab64261b3a
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/ id=e209c9ab64261b3a status=302 dur=0s
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/inspect/http id=d0e6c0ed6cd3f5f3
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/inspect/http id=d0e6c0ed6cd3f5f3 status=200 dur=1.0553ms
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/static/css/app.398abcb27117c32bb620.css id=b7f6e4785803f470
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/static/js/vendor.af72dc946622407d0fca.js id=d9eeb4d0642008b9
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/static/css/app.398abcb27117c32bb620.css id=b7f6e4785803f470 status=200 dur=99.3299ms
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/static/js/rpx.00716456c1ab12797503.js id=8c363a01067fa2ed
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/static/js/rpx.00716456c1ab12797503.js id=8c363a01067fa2ed status=200 dur=0s
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/static/js/app.c10e08047399653bf94e.js id=67520c464e072d99
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/static/js/app.c10e08047399653bf94e.js id=67520c464e072d99 status=200 dur=0s
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/static/js/vendor.af72dc946622407d0fca.js id=d9eeb4d0642008b9 status=200 dur=114.8267ms
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/grpc/agent.Web/Preloaded id=837b2b057abe7498
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/grpc/agent.Web/State id=6481bee7029362f2
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/grpc/agent.Web/Preloaded id=837b2b057abe7498 status=200 dur=1.5647ms
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/static/assets/glyphicons-halflings-regular.woff2 id=72682192fc9c553d
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/static/assets/glyphicons-halflings-regular.woff2 id=72682192fc9c553d status=404 dur=0s
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/static/assets/glyphicons-halflings-regular.woff id=50da8eac98d926d7
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/static/assets/glyphicons-halflings-regular.woff id=50da8eac98d926d7 status=404 dur=0s
+t=2025-08-19T19:44:07+0700 lvl=info msg=start pg=/static/assets/glyphicons-halflings-regular.ttf id=9326db45ef9a214b
+t=2025-08-19T19:44:07+0700 lvl=info msg=end pg=/static/assets/glyphicons-halflings-regular.ttf id=9326db45ef9a214b status=404 dur=0s
+t=2025-08-19T19:44:08+0700 lvl=info msg=start pg=/static/favicon.ico id=8132f8c30e0c2585
+t=2025-08-19T19:44:08+0700 lvl=info msg=end pg=/static/favicon.ico id=8132f8c30e0c2585 status=200 dur=1.5627ms
+t=2025-08-19T20:06:24+0700 lvl=info msg=end pg=/grpc/agent.Web/State id=6481bee7029362f2 status=200 dur=22m16.5503335s
+t=2025-08-19T20:06:32+0700 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=9a3d2fdb811e err="read tcp [2001:448a:2093:2034:6089:82f:aec6:e15f]:64609->[2600:1f16:d83:1202::6e74:2]:443: wsarecv: An established connection was aborted by the software in your host machine."
+t=2025-08-19T20:06:35+0700 lvl=info msg="client session established" obj=tunnels.session
+t=2025-08-19T20:06:35+0700 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2025-08-19T20:06:36+0700 lvl=info msg=start pg=/grpc/agent.Web/State id=d4644d57fb9c3610
+t=2025-08-19T20:06:47+0700 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=6357772a480f clientid=9c7632e9d3b9ce77e18b18b842bc0920
